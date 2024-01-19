@@ -185,17 +185,13 @@ summary(data)
 # Gráfico relación consumo-incremento
 color_dieta = c("tomato1", "olivedrab3", "turquoise", "slateblue2")
 
-library(ggplot2)
+# Boxplot incremento por dieta
+boxplot(incremento ~ dieta, data = data, col = color_dieta)
 
-# Gráfico de dispersión Incremento vs Consumo con dieta
-ggplot(data, aes(x = consumo, y = incremento, color = factor(dieta))) +
-  scale_color_manual(values = color_dieta) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +  # Añade la línea de tendencia + 
-  labs(title = "Relación entre Incremento y Consumo por Dieta",
-       x = "Consumo",
-       y = "Incremento") +
-  theme_minimal()
+# Boxplot consumo por dieta
+boxplot(consumo ~ dieta, data = data, col = color_dieta)
+
+library(ggplot2)
 
 # Gráfico de dispersión Incremento vs Consumo sin dieta
 ggplot(data, aes(x = consumo, y = incremento)) +
@@ -205,19 +201,37 @@ ggplot(data, aes(x = consumo, y = incremento)) +
        x = "Consumo",
        y = "Incremento") +
   theme_minimal()
+
+# Gráfico de dispersión Incremento vs Consumo por dieta
+ggplot(data, aes(x = consumo, y = incremento, color = factor(dieta))) +
+  scale_color_manual(values = color_dieta) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +  # Añade la línea de tendencia + 
+  labs(title = "Relación entre Incremento y Consumo por Dieta",
+       x = "Consumo",
+       y = "Incremento") +
+  theme_minimal()
 ```
 
-```{r}
-boxplot(incremento ~ dieta, data = data, col = color_dieta)
-```
+Se evidencia una distribución equilibrada con 5 animales por cada tipo de dieta, lo que configura un diseño balanceado.
+
+El análisis del primer boxplot, que representa la relación entre el incremento de peso y la dieta, sugiere variaciones significativas entre los grupos. Esto se infiere al observar diferencias en las alturas de las cajas y la línea central, que representa la media de cada grupo. Además, las distintas alturas y longitudes de las líneas de dispersión indican variabilidades divergentes entre los grupos.
+
+En contraste, al examinar el segundo boxplot que relaciona el consumo de calorías con la dieta, se puede inferir si existen disparidades en el consumo calórico entre los grupos. Efectivamente, se observan diferencias notables entre los grupos.
+
+Por otro lado, el gráfico que ilustra la relación entre el aumento de peso y el consumo calórico revela una correlación positiva general. A mayor consumo de calorías, se evidencia un mayor incremento de peso, y viceversa.
+
+Al analizar esta relación de manera específica para cada dieta, se mantiene la correlación positiva, pero se aprecian pendientes distintas para cada tipo de dieta. Destaca que la dieta 4 exhibe la correlación positiva más pronunciada.
+
+En conjunto, estos hallazgos contribuyen a una comprensión más profunda de las relaciones entre las variables, lo que facilita el ajuste preciso de los modelos de regresión.
 
 ## 2.2 Modelo Lineal
 
-### Ajustando ajustar el consumo calórico
+### Ajustando según el consumo calórico
 
 El modelo lineal, teniendo en cuenta el consumo calórico, puede especificarse como:
 
-$ y_{ij} = \mu + \alpha_{i} + \beta X_{ij} + \epsilon_{ij}$
+$y_{ij} = \mu + \alpha_{i} + \beta X_{ij} + \epsilon_{ij}$
 
 Donde:
 
@@ -234,15 +248,17 @@ Suposiciones adicionales:
 + El coeficiente de regresión $\beta$ es el mismo para todos los grupos de tratamiento (dietas).
 + Las dietas no influyen sobre el consumo calórico (covariante $X$)
 
-Además se asumen otras dos suposiciones clave para este modelo, y es que el coeficiente de regresión $\beta$ es el mismo para todos los grupos (para todas las dietas) y que las dietas no influyen en la covariante $X$.
+El modelo covariante propone utilizar una línea de regresión para cada tratamiento. Esta línea representa cómo la variable de interés cambia en relación con la covariable. Todas las líneas son similares en términos de la dirección de cambio, es decir, comparten la misma "pendiente" ($β$). Esto significa que todos los tratamientos responden de manera similar a la covariable.
 
-El modelo covariante para el tratamiento $i$ es una recta de regresión con pendiente $β$ que relaciona la variable respuesta con la covariante, que crea rectas paralelas con términos independientes (ordenadas al origen o intercepts en inglés) $\mu + \alpha_{i}$. Esto es un conjunto de rectas de regresión paralelas, una para cada tratamiento, con ordenadas al origen posiblemente diferentes.
+Sin embargo, hay diferencias entre los tratamientos, y estas diferencias se reflejan en los términos independientes o "ordenadas al origen" ($\mu + \alpha_{i}$). Cada tratamiento tiene su propia ordenada al origen ($\alpha_{i}$), que se suma a una ordenada al origen común ($\mu$). Esto significa que aunque las líneas son paralelas, pueden tener alturas diferentes en el eje vertical, indicando que cada tratamiento puede tener un nivel inicial diferente en la variable de interés.
+
+En resumen, el modelo utiliza líneas de regresión paralelas para representar cómo los diferentes tratamientos responden a la covariable, con la flexibilidad de tener diferentes niveles iniciales debido a los términos $\alpha_{i}$.
 
 ### Sin ajustar por consumo calórico
 
 El modelo lineal, sin tener en cuenta el consumo calórico, puede especificarse como:
 
-$ y_{ij} = \mu + \alpha_{i} + \epsilon_{ij}$
+$y_{ij} = \mu + \alpha_{i} + \epsilon_{ij}$
 
 Donde:
 
@@ -250,6 +266,8 @@ Donde:
 + $\mu$ es el efecto medio global.
 + $\alpha_{i}$ es el efecto adicional de la dieta $i$ en comparación con el promedio global.
 + $\epsilon_{ij}$ son errores experimentales aleatorios con distribución normal, media 0 y varianza $\sigma^2$. ($\epsilon_{ij} \sim N(0, \sigma^2)$).
+
+En este caso, el modelo lineal es mucho más simple porque no se tiene en cuenta la covariable consumo. Es por ello que este modelo simple describe cómo las observaciones ($y_{ij}$) se componen del nivel medio común ($\mu$), la contribución única de cada tratamiento ($\alpha_{i}$), y la variabilidad no explicada ($\epsilon_{ij}$).
 
 ## 2.3 Efecto de la dieta
 
@@ -260,10 +278,11 @@ Donde:
 modelo_con <- lm(incremento ~ dieta + consumo, data = data)
 
 summary(modelo_con)
-
-# ANOVA - con la covariable primero y luego el factor
-anova(lm(incremento ~ consumo + dieta, data=data))
 ```
+
+En el caso de variables dummy que representan categorías (como las dietas), el término constante (o intercepto) es la estimación del valor medio de la variable de respuesta para la categoría de referencia. En este caso, la dieta 1 es la categoría de referencia. Entonces, el término constante representará la estimación del aumento de peso medio para la dieta 1. Las otras variables dummy (dieta 2, dieta 3 y dieta 4) indicarán cómo difieren las otras dietas en comparación con la dieta 1. En resumen, se puede considerar que la dieta 1 es equivalente al intercepto en este contexto específico.
+
+Una vez explicado esto, podemos ver en el resumen del modelo que la estimación para la dieta 1 (intercepto) es de 15.74, y para la dieta 2 es de -14.94. Esto quiere decir que la dieta 1 hace que el peso incremente más que con la dieta 2. No debemos confundir que el estimado de la dieta 2 sea negativo con que disminuya el peso, si no que aumenta pero en menor medida que con la dieta 1, que es con la que se está comparando. Esto concuerda con la exploración inicial de los datos, en la que la dieta 1 mostraba mayor incremento de peso que la dieta 2.
 
 ### Sin ajustar el consumo
 
@@ -273,27 +292,58 @@ modelo_sin <- lm(incremento ~ dieta, data = data)
 
 # Resumen del modelo
 summary(modelo_sin)
-
-anova(modelo_sin)
 ```
+
+En este caso, el estimado para la dieta 1 es de 63, mientras que para la dieta 2 es de -15.8. Como mencionamos previamente, esto indica que la dieta 1 está asociada con un mayor aumento de peso en comparación con la dieta 2.
+
+Al comparar el estimado de la dieta 1 ajustando el modelo con y sin la covariable, notamos una diferencia sustancial en la estimación (15.74 vs 63). Esta disparidad probablemente se debe a la omisión del efecto del consumo calórico en el modelo sin covariable.
+
+Como hemos observado en la exploración de datos, existe una relación positiva entre la covariable (consumo) y la variable de respuesta. Al no incluir esta covariable en el modelo, parte de la variabilidad debida al consumo se atribuye erróneamente a la variable dieta. Esto se refleja en un estimado más alto para la dieta 1, que sirve como referencia.
+
+Al incorporar el consumo como una covariable en el modelo, estamos intentando aislar el efecto específico de la dieta en el aumento de peso, controlando o ajustando por las diferencias en el consumo entre las dietas. Este enfoque proporciona una estimación más precisa del efecto de la dieta, eliminando el posible sesgo en la relación entre la covariable y la variable de respuesta.
+
+En resumen, al incluir el consumo como covariable, se mejora la capacidad del modelo para discernir entre los efectos de la dieta y el consumo en el aumento de peso, lo que resulta en estimaciones más ajustadas y potencialmente más precisas.
+
+En resumen, al incluir el consumo como covariable, se está mejorando la capacidad del modelo para discernir entre los efectos de la dieta y el consumo en el aumento de peso, y, por lo tanto, se obtienen estimaciones más ajustadas y potencialmente más precisas.
 
 ## 2.4 Diagnosis de suposiciones
 
-+ LAS YA MENCIONADAS
+#### Independencia de los residuos
 
-#### Linealidad: 
+```{r}
+# Gráfico de residuos vs. orden de observaciones
+plot(resid(modelo_con) ~ seq_along(resid(modelo_con)))
 
-    Linealidad: Se asume que la relación entre la variable de respuesta (yy) y la covariable (XX) es lineal. Esto implica que los cambios en yy son proporcionales a los cambios en XX.
+library(lmtest)
+# Prueba de Durbin-Watson para autocorrelación de los residuos
+dwtest(modelo_con)
+```
 
-    Independencia de errores: Los errores (ϵijϵij​) deben ser independientes entre las observaciones. En el contexto de tu experimento, esto significa que el aumento de peso de un animal bajo una dieta específica no debe estar relacionado con el aumento de peso de otro animal bajo la misma dieta.
+
 
 #### Homocedasticidad
 
-    Homocedasticidad: La varianza de los errores debe ser constante en todos los niveles de la covariable. Esto significa que la dispersión de los errores debe ser constante a lo largo de todos los niveles de consumo calórico.
+```{r}
+plot(modelo_con, which=1)
 
-    Normalidad de errores: Aunque no es necesario para realizar inferencias sobre los coeficientes, la normalidad de los errores facilita la interpretación de los intervalos de confianza y las pruebas de hipótesis. Esto implica que los errores (ϵijϵij​) deben seguir una distribución normal.
+# Prueba de Breusch-Pagan para homocedasticidad
+library(lmtest)
+bptest(modelo_con)
+```
 
-    No colinealidad perfecta: Las covariables (en este caso, el consumo calórico XX) no deben tener una relación lineal perfecta entre sí (colinealidad perfecta). La colinealidad puede dificultar la interpretación de los coeficientes.
+La dispersión de los residuos es constante a medida que cambian los valores ajustados. Vemos una dispersión uniforme de puntos alrededor de cero, indicando homocedasticidad.
+
+Por otro lado, la prueba de Breusch-Pagan testa la H0 de homocedasticidad. Como obtenemos un pvalor alto (mayor que 0.05) sugiere que no hay suficiente evidencia para rechazar la hipótesis nula, indicando homocedasticidad.
+
+#### Normalidad
+
+```{r}
+plot(modelo_con, which=2)
+
+shapiro.test(modelo_con$residuals)
+```
+
+Tanto a partir del QQ-Plot (puntos alrededor de la diagonal), como el test de Shapiro-Wilks (p-valor > 0,05), concluimos que los residuos son normales.
 
 ## 2.5 Diferencias entre dietas
 
@@ -314,8 +364,5 @@ resumen_comp$test$pvalues_ajustados <- pvalores_ajustados
 
 # Mostrar el resumen con pvalores ajustados
 print(resumen_comp)
-
 ```
-
-Después de ajustar los pvalores por Bonferroni, vemos que existen diferencias significativas entre las dietas 4 y 1, las dietas 3 y 2 y por último las dietas 4 y 3.
-Vemos que existen diferencias 
+Se han realizado comparaciones múltiples por el método Tukey, y después de ajustar los pvalores por Bonferroni, vemos que existen diferencias significativas entre las dietas 4 y 1, las dietas 3 y 2 y por último las dietas 4 y 3.
