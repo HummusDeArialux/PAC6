@@ -492,7 +492,7 @@ Este hallazgo se corrobora al analizar el gráfico de dispersión, donde la lín
 Al segmentar los resultados según el tipo de tratamiento, se sugiere que el tratamiento exhibe una pendiente descendente ligeramente más pronunciada que la del tratamiento 0.
 
 ```{r, fig.width=10, fig.height=15}
-ggplot(data, aes(x = tiempo, y = depresion)) + 
+ggplot(data, aes(x = tiempo, y = depresion, color = tratamiento)) + 
   geom_smooth(method = "lm", level = 0.95) +
   geom_point() + 
   facet_wrap(~ paciente, nrow = 10, ncol = 5) +
@@ -634,52 +634,6 @@ No obstante, la presencia de una interacción significativa sugiere que la relac
 Para obtener mayor claridad sobre estos efectos, se podrían llevar a cabo análisis exploratorios y post hoc adicionales.
 
 ## 3.5 Modelo estimado en las pacientes 1 y 26
-
-#### Coeficientes fijos
-
-Representan los efectos medios para todas las pacientes.
-
-```{r}
-# Coeficientes fijos del modelo para todos los pacientes
-coeficientes_fijos <- fixef(modelo1)
-
-# Coeficientes para el paciente 1
-coef_paciente1 <- coeficientes_fijos + efecto_paciente1
-
-# Coeficientes para el paciente 26
-coef_paciente26 <- coeficientes_fijos + efecto_paciente26
-
-cat("Paciente 1:")
-coef_paciente1
-cat("\n")
-cat("Paciente 26:")
-coef_paciente26
-
-coeficientes_fijos
-```
-
-#### Efectos aleatorios
-
-Representan las desviaciones individuales de los coeficientes fijos para cada paciente. En este caso, estos efectos aleatorios modelan las diferencias individuales en las intercepciones y pendientes respecto al tiempo.
-
-Se pueden interpretar los efectos específicos de los pacientes como la desviación de cada uno respecto a los coeficientes fijos promedio.
-
-```{r}
-library(lme4)
-efectos_aleatorios <- ranef(modelo1)$paciente
-
-efecto_paciente1 <- efectos_aleatorios[1, ]
-efecto_paciente26 <- efectos_aleatorios[26, ]
-
-cat("Paciente 1:", efecto_paciente1)
-cat("\n")
-cat("Paciente 26:", efecto_paciente26)
-```
-
-```{r}
-coef(modelo1)$paciente["1",]
-coef(modelo1)$paciente["26",]
-```
 
 ```{r}
 # Coeficientes fijos del modelo para todos los pacientes
