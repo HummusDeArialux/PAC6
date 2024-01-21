@@ -26,7 +26,7 @@ data$dia <- factor(data$dia, levels = c(1, 2, 3), labels = c("dia1", "dia2", "di
 
 ```{r}
 # Primero examinamos la variable ratio
-summary(data$ratio)
+summary(data)
 
 # Box plot de ratio por espectrometro
 boxplot(ratio ~ espectrometro, data = data, col = c("blue4", "aquamarine2", "cadetblue1"), main = "Boxplot de Ratio por Espectrómetro")
@@ -37,6 +37,23 @@ boxplot(ratio ~ suelo, data = data, col = c("darkslateblue", "darkviolet"), main
 # Box plot de ratio por dia
 boxplot(ratio ~ dia, data = data, col = c("darkgreen", "chartreuse3", "darkolivegreen2"), main = "Boxplot de Ratio por Dia")
 ```
+
+```{r, fig.width=15, fig.height=10}
+# Create an interaction factor of espectrometro and suelo
+espectrometro_suelo <- interaction(data$espectrometro, data$suelo)
+
+# Box plot of ratio by espectrometro and suelo
+boxplot(data$ratio ~ espectrometro_suelo, col = c("blue4", "aquamarine2", "cadetblue1", "darkslateblue", "darkviolet", "pink3"), 
+        main = "Boxplot de Ratio por Espectrómetro y Suelo")
+```
+
+En el análisis del boxplot correspondiente al "Ratio por Espectrómetro", se observa una ligera disparidad en las mediciones entre los espectrómetros. Esta discrepancia se evidencia mediante la diferencia en la altura de las cajas y la variación en la media de las mediciones, destacada por una línea negra en cada caja.
+
+En cuanto al boxplot relativo al "Ratio por Suelo", se destaca que el suelo rural presenta, en general, un ratio de 14N a 15N superior al observado en el suelo urbano. Esta diferencia se refleja tanto en la altura como en el ancho de las cajas, indicando que el suelo rural exhibe un ratio más elevado en comparación con el suelo urbano.
+
+Adicionalmente, se observa una notable consistencia en las mediciones diarias, ya que muestran una variación mínima.
+
+Al combinar los datos de espectrómetro y suelo en un único gráfico, se puede evaluar la interacción entre ambos factores. Se aprecia que, para el suelo urbano, las mediciones de los espectrómetros presentan una mayor disparidad en comparación con el suelo rural, donde las mediciones son más uniformes. Específicamente, se destaca que el espectrómetro 2 en el suelo urbano proporciona mediciones notablemente más bajas.
 
 ## 1.2 Modelo lineal
 
@@ -72,10 +89,12 @@ Para la interacción suelo-espectrómetro:
 + $H_{1}:$ Existe al menos una $(\alpha\beta)_{ij} \ne 0$. Hay al menos una interacción significativa entre el tipo de suelo y el espectrómetro.
 
 Para el efecto aleatorio del día:
+
 + $H_{0}: \sigma^2_{C(AB)} = 0$. No hay variabilidad significativa asociada con los días anidados en la combinación de suelo y espectrómetro.
 + $H_{1}: \sigma^2_{C(AB)} > 0$. Existe variabilidad significativa asociada con los días anidados en la combinación de suelo y espectrómetro.
 
 Para el error aleatorio:
+
 + $H_{0}: \sigma^2_{\epsilon} = 0$. No hay variabilidad significativa no explicada por los factores considerados en el modelo.
 + $H_{1}: \sigma^2_{\epsilon} > 0$. Existe variabilidad significativa no explicada por los factores considerados en el modelo.
 
@@ -90,29 +109,42 @@ modelo <- lmer(ratio ~ suelo + espectrometro + suelo:espectrometro + (1 | dia:su
 
 summary(modelo)
 
-# Testamos las hipótesis
+# Intervalos de confianza
+library(broom)
+confint(modelo)
+```
 
+En la síntesis del modelo, no se evidencian los factores que resultan significativos. No obstante, es posible calcular los valores de confianza mediante el empleo de un valor crítico de la distribución t de Student. En esta distribución, un nivel de confianza del 0.05 implicaría un valor crítico de 1.96.
+
+El intervalo de confianza se formula como el estimado del coeficiente más o menos 1.96 veces el error estándar del coeficiente. Para mayor conveniencia, este cálculo se realiza de forma automática mediante el paquete "broom".
+
+Al examinar los intervalos de confianza, se constata que todos los factores son estadísticamente significativos, a excepción del espectrómetro 2, ya que su intervalo de confianza incluye el valor 0. Por otro lado, el intercepto, el suelo urbano, el espectrómetro 3 y las interacciones suelo urbano:espectrómetro 2 y suelo urbano:espectrómetro 3, exhiben diferencias significativas en comparación con la referencia establecida, que corresponde al suelo rural y el espectrómetro 1.
+
+```{r}
+# Testamos las hipótesis
 anova_modelo <- Anova(modelo, type = "III", test = "Chisq")
 print(anova_modelo)
 ```
 
-Especificar que queremos la ANOVA de "tipo III" implica que se atribuye la variabilidad a cada término después de tener en cuenta todos los demás términos, incluidas las interacciones que involucran ese término. Es útil cuando se tienen interacciones y se busca evaluar la contribución de cada variable a la variabilidad explicada, considerando las otras variables y sus interacciones.
+La especificación de la ANOVA de "tipo III" implica la atribución de variabilidad a cada término, teniendo en cuenta todos los demás términos, incluidas las interacciones que involucran dicho término. Esta aproximación resulta útil cuando se presentan interacciones y se busca evaluar la contribución de cada variable a la variabilidad explicada, considerando las otras variables y sus interacciones.
 
-Además, como no se han comprobado las suposiciones (normalidad y homocedasticidad), es preferible usar la prueba Chi-cuadrado en lugar de F.
+Cabe destacar que, dado que no se han verificado las suposiciones de normalidad y homocedasticidad, se prefiere utilizar la prueba de Chi-cuadrado en lugar de la prueba F.
 
-Como podemos ver en los resultados, el suelo y la interacción suelo:espectrofotometro son significativas (pv<0.05), aunque el espectrofotómetro por sí mismo no lo es (pv>0.05). Veamos en detalle lo que esto significa:
+En cuanto a los resultados, se observa que tanto el suelo como la interacción suelo:espectrofotómetro son significativas (valor de p < 0.05), mientras que el espectrofotómetro por sí mismo no lo es (valor de p > 0.05). A continuación, se detalla la interpretación de estos hallazgos:
 
-+ Suelo Significativo: Hay diferencias estadísticamente significativas en la proporción de 14N a 15N entre los suelos urbanos y rurales (pv<0.05, se rechaza H0), después de tener en cuenta los otros efectos en el modelo. En otras palabras, hay evidencia estadística para afirmar que el tipo de suelo tiene un impacto significativo en la proporción de nitrógeno.
++ Suelo significativo: Se constatan diferencias estadísticamente significativas en la proporción de 14N a 15N entre los suelos urbanos y rurales (valor de p < 0.05, rechazo de H0), después de considerar los demás efectos en el modelo. En resumen, existe evidencia estadística que respalda la afirmación de que el tipo de suelo tiene un impacto significativo en la proporción de nitrógeno.
 
-+ Espectrómetro No Significativo: No hay evidencia estadística suficiente para afirmar que hay diferencias en la proporción de 14N a 15N entre los distintos espectrómetros (pv>0.05, se acepta H0), después de considerar los otros efectos. En resumen, las variaciones observadas en la proporción de nitrógeno no pueden atribuirse de manera significativa a las diferencias entre los espectrómetros utilizados.
++ Espectrómetro no significativo: No se dispone de suficiente evidencia estadística para sostener que existen diferencias en la proporción de 14N a 15N entre los distintos espectrofotómetros (valor de p > 0.05, aceptación de H0), después de tomar en cuenta los otros efectos. En resumen, las variaciones observadas en la proporción de nitrógeno no pueden atribuirse de manera significativa a las diferencias entre los espectrofotómetros utilizados. Es posible que la no significancia se deba a que el espectrofotómetro 3 no difiere, a pesar de que el 2 sí lo hace según el intervalo de confianza.
 
-+ Interacción Suelo-Espectrómetro Significativa: La influencia del espectrómetro en la proporción de nitródeno depende del tipo de suelo. En otras palabras, la diferencia en la proporción de 14N a 15N entre los espectrómetros puede variar según si el suelo es urbano o rural. (pv<0.05, se rechaza H0). Esta interacción indica que el efecto del espectrómetro no es constante en todos los suelos y viceversa.
++ Interacción suelo-espectrómetro significativa: Se evidencia que la influencia del espectrofotómetro en la proporción de nitrógeno depende del tipo de suelo (valor de p < 0.05, rechazo de H0). En otras palabras, la diferencia en la proporción de 14N a 15N entre los espectrofotómetros puede variar según si el suelo es urbano o rural. Esta interacción indica que el efecto del espectrofotómetro no es constante en todos los suelos y viceversa.
 
-En resumen, los resultados sugieren que el tipo de suelo y la interacción entre el tipo de suelo y el espectrómetro son factores significativos en la variabilidad de la proporción de 14N a 15N, mientras que el espectrómetro por sí mismo no tiene un efecto significativo en esta proporción.
+En resumen, los resultados sugieren que el tipo de suelo y la interacción entre el tipo de suelo y el espectrofotómetro son factores significativos en la variabilidad de la proporción de 14N a 15N, mientras que el espectrofotómetro por sí mismo no tiene un efecto significativo en esta proporción, aunque este patrón parece no aplicar al espectrofotómetro 2.
 
 ## 1.5 Comparaciones múltiples
 
-Cómo el factor espectrómetro no mostraba diferencias significativas y el factor suelo sólo tiene 2 niveles; la única comparación múltiple que tiene sentido realizar es la de la interación.
+Dado que el factor suelo consta únicamente de dos niveles, carece de fundamento llevar a cabo una comparación múltiple. A pesar de que el espectrómetro no muestra significancia de manera general, hemos observado que el espectrómetro 2 presenta un significado estadístico; procederemos a verificar estos resultados. Por último, examinaremos también la interacción suelo:espectrómetro.
+
+#### Para la interacción:
 
 ```{r}
 # install.packages("emmeans")
@@ -146,7 +178,8 @@ formatted_table <- data.frame(
 )
 
 # Imprimimos la tabla
-kable(formatted_table, col.names = c("Contraste", "P-Valor"))
+library(knitr)
+kable(formatted_table, col.names = c("Contraste", "P-Valor"), format = "pandoc")
 ```
 
 Eso significa que:
@@ -156,10 +189,31 @@ Eso significa que:
 + Hay evidencia significativa para afirmar que la proporción de nitrógeno en el suelo urbano es diferente cuando se utiliza el espectrómetro_2 en comparación con el suelo rural cuando se utiliza el espectrómetro_3.
 + Hay evidencia significativa para afirmar que la proporción de nitrógeno en el suelo urbano es diferente cuando se utiliza el espectrómetro_2 en comparación con el mismo suelo urbano cuando se utiliza el espectrómetro_3.
 
-Estos p-valores bajos indican que, después de ajustar para múltiples comparaciones, las diferencias observadas en estas combinaciones específicas son estadísticamente significativas. Para el resto de combinaciones no se observan diferencias significativas.
+Estos valores de p bajos indican que, tras ajustar para múltiples comparaciones, las diferencias observadas en estas combinaciones específicas son estadísticamente significativas. Para las demás combinaciones, no se detectan diferencias significativas.
 
-Cabe destacar la importancia de realizar una corrección para minimizar el error de tipo 1, ya que se estan realizando un gran número de comparaciones. En este caso se ha usado la corrección de Bonferroni.
+Es relevante subrayar la importancia de realizar correcciones para mitigar el error de tipo 1, especialmente dado el gran número de comparaciones efectuadas. En este caso, se ha implementado la corrección de Bonferroni.
 
+#### Para el espectrómetro:
+
+```{r}
+# Instalar el paquete emmeans si aún no lo has hecho
+# install.packages("emmeans")
+
+# Cargar el paquete
+library(emmeans)
+
+# Calcular las medias marginales ajustadas (LSMeans)
+lsmeans_modelo <- emmeans(modelo, ~espectrometro)
+
+# Comparaciones múltiples entre niveles de espectrómetros
+comparaciones <- pairs(lsmeans_modelo)
+
+# Ver los resultados
+summary(comparaciones)
+
+```
+
+Se ratifica la existencia de una disparidad significativa entre el espectrómetro 2 y el espectrómetro 1, dado que se obtiene un valor de 0.03, lo cual conduce al rechazo de la hipótesis nula (H0) que sostiene que no existen diferencias entre ambos. Por otro lado, se constata la ausencia de discrepancias entre el espectrómetro 1 y el espectrómetro 3, así como entre el espectrómetro 2 y el espectrómetro 3 (valor de p > 0.05). Este resultado ya se reflejaba en el resumen del modelo, aunque la comparación entre el espectrómetro 2 y el espectrómetro 3 no estaba detallada.
 
 # Problema 2
 
