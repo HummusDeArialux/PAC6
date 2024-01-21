@@ -635,27 +635,34 @@ Para obtener mayor claridad sobre estos efectos, se podrían llevar a cabo anál
 
 ## 3.5 Modelo estimado en las pacientes 1 y 26
 
+#### Coeficientes fijos
+
+Representan los efectos medios para todas las pacientes.
+
 ```{r}
-coef(modelo1)$paciente["1",]
-coef(modelo1)$paciente["26",]
+# Coeficientes fijos del modelo para todos los pacientes
+coeficientes_fijos <- fixef(modelo1)
+
+# Coeficientes para el paciente 1
+coef_paciente1 <- coeficientes_fijos + efecto_paciente1
+
+# Coeficientes para el paciente 26
+coef_paciente26 <- coeficientes_fijos + efecto_paciente26
+
+cat("Paciente 1:")
+coef_paciente1
+cat("\n")
+cat("Paciente 26:")
+coef_paciente26
+
+coeficientes_fijos
 ```
 
+#### Efectos aleatorios
 
-Tal y como hemos explicado antes:
+Representan las desviaciones individuales de los coeficientes fijos para cada paciente. En este caso, estos efectos aleatorios modelan las diferencias individuales en las intercepciones y pendientes respecto al tiempo.
 
-$depresion = \beta_{0} + \beta_{tratamiento}*tratamiento + \beta_{tiempo}*tiempo + \beta_{tratamiento:tiempo}*tratamiento:tiempo + b_{paciente} + \epsilon$
-
-$depresion = 20.88 + 0.61*tratamiento + \beta_{tiempo}*tiempo + \beta_{tratamiento:tiempo}*tratamiento:tiempo + b_{paciente} + \epsilon$
-
-Donde: 
-
-+ $\beta_{0}$ es el intercepto.
-+ $\beta_{tratamiento}, \beta_{tiempo}, \beta_{tratamiento:tiempo}$ son los coeficientes asociados a las variables predictoras.
-+ $b_{paciente}$ es el efecto aleatorio para cada paciente.
-
-Esta ecuación representa la relación entre la variable de respuesta (depresión) y las variables predictoras (tratamiento, tiempo, y la interacción entre tratamiento y tiempo) considerando tanto los efectos fijos como los efectos aleatorios.
-
-Podemos extraer y estudiar los efectos aleatorios de los pacientes 1 y 26.
+Se pueden interpretar los efectos específicos de los pacientes como la desviación de cada uno respecto a los coeficientes fijos promedio.
 
 ```{r}
 library(lme4)
@@ -669,18 +676,75 @@ cat("\n")
 cat("Paciente 26:", efecto_paciente26)
 ```
 
-Para el paciente 1: El valor positivo sugiere que su respuesta en depresión es aproximadamente 0.895 unidades más alta de lo esperado basándose en el modelo global. En otras palabras, el paciente 1 experimenta una depresión más elevada de lo que se predice por el modelo para el conjunto de datos en su totalidad.
-
-Para el paciente 26: El valor positivo de 0.612 sugiere que su respuesta en depresión es aproximadamente 0.612 unidades más alta de lo esperado basándose en el modelo global. En este caso, el paciente 26 también experimenta una depresión más elevada de lo predicho por el modelo.
-
-Estos valores proporcionan información sobre la variabilidad individual entre los pacientes en términos de la respuesta a la depresión. Es importante tener en cuenta que estos efectos aleatorios representan la diferencia entre la respuesta real de cada paciente y la respuesta predicha por los efectos fijos del modelo global.
-
-En resumen, un valor positivo indica que el paciente tiene una respuesta más alta de lo esperado, mientras que un valor negativo indicaría una respuesta más baja de lo esperado.
-
-En cuanto a los efectos fijos o coeficientes:
-
 ```{r}
-summary(modelo1)
+coef(modelo1)$paciente["1",]
+coef(modelo1)$paciente["26",]
 ```
 
-Como hemos explicado antes, tanto para el paciente 1 como para el 26, la depresión diminuye conforme el tiempo aumenta.
+```{r}
+# Coeficientes fijos del modelo para todos los pacientes
+coeficientes_fijos <- fixef(modelo1)
+
+# Efectos aleatorios para los pacientes 1 y 26
+efectos_aleatorios <- ranef(modelo1)$paciente
+efecto_paciente1 <- efectos_aleatorios[1, ]
+efecto_paciente26 <- efectos_aleatorios[26, ]
+
+# Coeficientes para el paciente 1 y 26
+coef_paciente1 <- coeficientes_fijos + efecto_paciente1
+coef_paciente26 <- coeficientes_fijos + efecto_paciente26
+
+# Impresión de coeficientes
+cat("Coeficientes fijos para todos los pacientes:")
+coeficientes_fijos
+cat("\n")
+
+cat("Efectos aleatorios para el paciente 1:")
+efecto_paciente1
+cat("\n")
+
+cat("Efectos aleatorios para el paciente 26:")
+efecto_paciente26
+cat("\n")
+
+cat("Coeficientes para el paciente 1:")
+coef_paciente1
+cat("\n")
+
+cat("Coeficientes para el paciente 26:")
+coef_paciente26
+```
+
+Al extraer los coeficientes fijos sabemos que:
+
++ $\beta_{0} = 19.64$ 
++ $\beta_{1} = -2.18$
++ $\beta_{2} = -0.59$
++ $\beta_{3} = 0.22$
+
+Si examinamos estos coeficientes comprendemos como varía la depresión según cada factor.
+
+En cuánto a los efectos aleatorios para los pacientes 1 y 26, estos nos dan la información de cómo difieren del promedio en términos de intercepción y pendiente. Los coeficientes específicos para cada paciente combinan estos efectos aleatorios con los coeficientes fijos para proporcionar estimaciones específicas para esos pacientes.
+
+Con los coeficientes específicos de cada paciente podemos escribir sus modelos específicos, para el paciente 1:
+
+$Y_{1j} = 20.50 + -1.31*tratamiento_{1} +  -0.59*tiempo_{1j} + 0.22*(tratamiento_{1}$ x $tiempo_{1j}) + u_{10} + u_{1l}*tiempo_{1j} + \epsilon_{1j}$
+
+Para el paciente 26:
+
+$Y_{26j} = 20.23 + -1.58*tratamiento_{26} +  -0.86*tiempo_{26j} + -0.04*(tratamiento_{26}$ x $tiempo_{26j}) + u_{260} + u_{26l}*tiempo_{26j} + \epsilon_{26j}$
+
+La intercepción inicial es ligeramente mayor para el paciente 1 que para el paciente 26, indicando que estaba inicialmente más deprimida.
+
+El paciente 26 parece tener un efecto de tratamiento más negativo en comparación con el paciente 1. Esto indica que le hace más efecto el fármaco al paciente 26, ya que le influye de mayor manera en la variable respueta.
+
+Ambos pacientes muestran una disminución en la medida de depresión a lo largo del tiempo, pero el paciente 26 tiene una pendiente más pronunciada.
+
+La interacción entre tratamiento y tiempo tiene un impacto positivo para el paciente 1 y un impacto apenas negativo para el paciente 26.
+
+Los términos aleatorios representan las diferencias individuales en las intercepciones y en las pendientes respecto al tiempo .
+
+Los valores específicos de estos términos aleatorios indicarán cómo cada paciente difiere del promedio en términos de su intercepción y pendiente respecto al tiempo. 
+
+Efectos aleatorios para el paciente 1:[1] 0.8663686.
+Efectos aleatorios para el paciente 26:[1] 0.5924931.
