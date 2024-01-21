@@ -445,7 +445,6 @@ data <- read.csv("dades_problema3_pec6.csv", dec = ".", header = TRUE, sep = ","
 # Marcamos los factores
 data$tratamiento <- as.factor(data$tratamiento)
 data$paciente <- as.factor(data$paciente)
-data$tiempo <- as.factor(data$tiempo)
 ```
 
 ## 3.1 Análisis descriptivo
@@ -484,6 +483,14 @@ ggplot(data, aes(x = tiempo, y = depresion, color = factor(tratamiento))) +
   theme_minimal()
 ```
 
+Con base en la observación del diagrama de cajas, se sugiere que el tratamiento 1 exhibe una disminución en la prevalencia de la depresión en comparación con el tratamiento 0.
+
+En relación al segundo diagrama de cajas, se aprecia una aparente reducción en la depresión posparto conforme transcurre el tiempo, manifestada por una tendencia descendente en las medianas representadas por las cajas.
+
+Este hallazgo se corrobora al analizar el gráfico de dispersión, donde la línea de tendencia general, identificada en azul, presenta una disminución gradual a lo largo del período de tiempo estudiado.
+
+Al segmentar los resultados según el tipo de tratamiento, se sugiere que el tratamiento exhibe una pendiente descendente ligeramente más pronunciada que la del tratamiento 0.
+
 ```{r, fig.width=10, fig.height=15}
 ggplot(data, aes(x = tiempo, y = depresion)) + 
   geom_smooth(method = "lm", level = 0.95) +
@@ -491,8 +498,9 @@ ggplot(data, aes(x = tiempo, y = depresion)) +
   facet_wrap(~ paciente, nrow = 10, ncol = 5) +
   theme(
   )
-
 ```
+
+Finalmente, al examinar la evolución temporal de la depresión por paciente, se evidencia que algunos individuos experimentan una reducción marcada, mientras que en otros casos la evolución es mínima, ilustrada por líneas de tendencia notablemente planas (por ejemplo, paciente 2 vs. paciente 10). Es relevante destacar que en ningún caso se observa una tendencia ascendente, indicativa de un aumento en la prevalencia de la depresión con el paso del tiempo.
 
 ## 3.2 Modelo lineal
 
