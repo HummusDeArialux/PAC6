@@ -525,34 +525,34 @@ Este modelo puede expresarse en notación matricial de la siguiente manera:
 
 $Y = X\beta + Zu + \epsilon$
 
-Dimensiones:
+Donde: 
 
-+ N=50×7=350N=50×7=350: Número total de observaciones.
-+ k: Número de tratamientos.
-+ p: Número de efectos fijos no relacionados con el tratamiento.
-+ q: Número de efectos aleatorios.
++ $Y$: Matriz (50×7)(50×7) que contiene las medidas de depresión para cada paciente en cada visita.
++ $X$: Matriz (350×4) de diseño para los efectos fijos, que incluye una columna de unos para la intercepción, $tratamiento_{i}$, $tiempo_{ij}$, y $tratamiento_{i}$ × $tiempo_{ij}$.
++ $β$: Vector (4×1) que contiene los coeficientes fijos $\beta_{0}$, $\beta_{1}$, $\beta_{2}$, $\beta_{3}$.
++ $Z$:  Matriz (350×2) de regresión de efectos aleatorios que contiene las variables aleatorias $u_{i0}$ y $u_{il}$ x $tiempo_{ij}$.
++ $u$: Vector (2×1) que contiene los términos aleatorios $u_{i0}$ y $u_{il}$.
++ $\epsilon$: Matriz (50×7)(50×7) que contiene los términos de error $\epsilon_{ij}$
 
-Ahora, definimos las matrices y vectores según estas dimensiones:
+La matriz de efecto fijos X sería construída de la siguiente manera:
 
-+ $Y$: Vector de todas las medidas de depresión, de dimensión 350×1350×1.
-+ $X$: Matriz de regresión de efectos fijos, de dimensión 350×(k+p)350×(k+p).
-+ $β$: Vector de coeficientes de efectos fijos, de dimensión (k+p)×1(k+p)×1.
-+ $Z$: Matriz de regresión de efectos aleatorios, de dimensión 350×q350×q.
-+ $u$: Vector de efectos aleatorios, de dimensión q×1q×1.
-+ $\epsilon$: Vector de errores, de dimensión 350×1350×1.
+![](C:/Users\Arialux\Documents\ShareX\Screenshots\2024-01\firefox_djrApP2d1I.png)
 
-Particionado para cada elemento, quedaría como:
+La matriz de efectos aleatorios Z sería construída de esta otra manera:
 
-$Y = $
+![](C:/Users\Arialux\Documents\ShareX\Screenshots\2024-01\firefox_QKAI1qft3e.png)
 
-$$\begin{bmatrix}
-Y_{1} \\
-Y_{2} \\
-. \\
-. \\
-. \\
-Y_{350}\\
-\end{bmatrix}$$
+Adicionalmente, los términos aleatorios $u_{i0}$ y $u_{il}$ se asume tienen una distribución conjunta normal con media cero y una matriz de covarianza. La asunción de normalidad y la estructura de covarianza permiten modelar la variabilidad entre los pacientes de una manera más flexible y realista. Estos términos aleatorios capturan las diferencias individuales en las intercepciones ($u_{i0}$) y las pendientes respecto al tiempo ($u_{il}$) entre los pacientes.
+
+La matriz de covarianza para los términos aleatorios se puede representar como:
+
+![](C:/Users\Arialux\Documents\ShareX\Screenshots\2024-01\firefox_mK3qo1eJG4.png)
+
+Donde:
+
++ $\sigma^2_{u0}$ es la varianza de $u_{i0}$.
++ $\sigma^2_{ul}$ es la varianza de $u_{il}$.
++ $Cov(u_{i0}, u_{il})$ y $Cov(u_{il}, u_{i0})$ son las covarianzas entre $u_{i0}$ y $u_{il}$.
 
 ## 3.3 Implementación del modelo
 
