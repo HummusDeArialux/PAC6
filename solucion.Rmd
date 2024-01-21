@@ -700,12 +700,19 @@ coeficientes_fijos
 cat("\n")
 
 cat("Efectos aleatorios para el paciente 1:")
-efecto_paciente1
+coef(modelo1)$paciente["1",]
 cat("\n")
 
 cat("Efectos aleatorios para el paciente 26:")
-efecto_paciente26
+coef(modelo1)$paciente["26",]
 cat("\n")
+
+cat("Coeficientes aleatorios para el paciente 1:")
+coef_paciente1
+cat("\n")
+
+cat("Coeficientes para el paciente 26:")
+coef_paciente26
 
 cat("Coeficientes para el paciente 1:")
 coef_paciente1
