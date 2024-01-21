@@ -558,7 +558,7 @@ Y_{350}\\
 
 ### Intercepciones aleatorias
 
-Para ajustar este modelo, especificamos que depresión es la variable respuesta y tratamiento y tiempo son variables independientes. Con el término "tratamiento * tiempo", también incluimos la interacción entre el tratamiento y el tiempo, ya que podría haber efectos diferenciados del tiempo según el tipo de tratamiento. Por otro lado, "(1|paciente)" especifica que estamos modelando una intercepto aleatorio para cada paciente. Esto tiene en cuenta la variabilidad entre los pacientes.
+Con el propósito de ajustar el presente modelo, se ha definido que la variable dependiente es la depresión, mientras que las variables independientes son el tratamiento y el tiempo. La inclusión del término "tratamiento * tiempo" se justifica por la posibilidad de que existan efectos diferenciados del tiempo según el tipo de tratamiento, dando cabida a la interacción entre ambas variables. Además, la especificación "(1|paciente)" indica que se está modelando un intercepto aleatorio para cada paciente, con el fin de tener en consideración la variabilidad existente entre los distintos pacientes en el análisis.
 
 ```{r}
 # install.packages("lme4", dependencies=TRUE)
@@ -574,25 +574,17 @@ summary(modelo1)
 
 ### Intercepciones y pendientes aleatorias
 
-Para ajustar este modelo, especificamos que depresión es la variable respuesta y tratamiento y tiempo son variables independientes. Con el término "tratamiento * tiempo", también incluimos la interacción entre el tratamiento y el tiempo, ya que podría haber efectos diferenciados del tiempo según el tipo de tratamiento. Por otro lado, "(tiempo | paciente)" especifica que estamos modelando una intercepción aleatoria y una pendiente aleatoria para cada paciente.
+Para llevar a cabo la especificación de este modelo, se ha designado la variable de respuesta como la medida de depresión, considerando tanto el tratamiento como el tiempo como variables independientes. La inclusión del término "tratamiento * tiempo" se justifica al incorporar la interacción entre tratamiento y tiempo, considerando la posibilidad de que existan efectos temporales diferenciados dependiendo del tipo de tratamiento.
 
-El término (tiempo | paciente) implica que cada paciente puede tener su propia intercepción (efecto inicial) y pendiente (efecto en el tiempo) en relación con la variable de respuesta.
+Adicionalmente, la especificación "(tiempo | paciente)" establece la modelización de una intercepción aleatoria y una pendiente aleatoria para cada paciente. Este término implica que cada individuo podría presentar una intercepción (efecto inicial) y una pendiente (efecto en el tiempo) propias con respecto a la variable de respuesta.
 
-
-remove.packages("Matrix")
-remove.packages("lme4")
-install.packages("lme4", type = "source")
-library(lme4)
-
-
+Cabe señalar que se ha optado por no incluir variaciones aleatorias en la variable tratamiento (tratamiento | paciente). Esta decisión se fundamenta en la consideración de que permitiría que la relación entre la depresión y el tratamiento varíe aleatoriamente entre pacientes. En el contexto de la problemática abordada, donde se está evaluando un fármaco, no resulta deseable que los pacientes reaccionen de manera diversa al tratamiento. Se parte del supuesto de que el fármaco, al ser considerado para su comercialización, debería inducir un efecto uniforme en todos los individuos, aunque se reconoce que la respuesta de cada paciente puede diferir a lo largo del tiempo.
 
 ```{r}
 library(lme4)
 
 # Define el modelo con intercepciones y pendientes aleatorias
-modelo2 <- lmer(depresion ~ tratamiento * tiempo + (tratamiento | paciente), data = data)
-
-# TRATAMIENTO O TIEMPO HOLA??
+modelo2 <- lmer(depresion ~ tratamiento * tiempo + (tiempo | paciente), data = data)
 
 # Muestra un resumen del modelo
 summary(modelo2)
@@ -600,60 +592,20 @@ summary(modelo2)
 
 ### Comparación de modelos
 
-#### Criterios de información
-
-```{r}
-# AIC y BIC
-modelo1_AIC <- AIC(modelo1)
-modelo1_BIC <- BIC(modelo1)
-modelo2_AIC <- AIC(modelo2)
-modelo2_BIC <- BIC(modelo2)
-
-# Creamos un df
-resultados_df <- data.frame(
-  Model = c("Modelo con intercepciones aleatorias", "Modelo con intercepciones y pendientes aleatorias"),
-  AIC = c(modelo1_AIC, modelo2_AIC),
-  BIC = c(modelo1_BIC, modelo2_BIC)
-)
-
-library(knitr)
-kable(resultados_df, format = "pandoc")
-```
-
-El AIC (Criterio de Información de Akaike) y el BIC (Criterio de Información Bayesiano), son medidas que evalúan la bondad de ajuste de un modelo, teniendo en cuenta su complejidad. En general, modelos con valores más bajos de AIC y BIC son considerados preferibles.
-
-El AIC penaliza la complejidad del modelo menos que el BIC. Cuanto menor sea el valor de AIC, mejor se considera el modelo en términos de ajuste y parsimonia.
-
-El BIC penaliza la complejidad del modelo de manera más fuerte que el AIC. Similar al AIC, un valor más bajo de BIC indica un mejor equilibrio entre ajuste y complejidad.
-
-Según esta información, parece ser que el modelo con intercepciones aleatorias describe bien el modelo sin necesidad de tanta complejidad.
-
-#### Comparación de modelos anidados
-
 ```{r}
 # Comparación de modelos usando likelihood ratio test
 anova(modelo1, modelo2)
 ```
 
-Según la prueba de razón de la verosimilitud, parece ser que no se muestran diferencias significativas entre los dos modelos (pvalor > 0.05). Siendo este el caso, es preferible escoger el modelo más sencillo, ya que explica igual de bien los datos que el modelo más complejo.
+Según la prueba de razón de verosimilitud, se observa una diferencia significativa entre los dos modelos evaluados (valor de p < 0.05). En virtud de este hallazgo, se concluye que el modelo más complejo es preferible, ya que demuestra una mejor capacidad para explicar la variabilidad inherente a la variable de respuesta.
 
-Un valor de p menor que un umbral (por ejemplo, 0.05) indicaría que el modelo más complejo es preferible.
+Asimismo, esta prueba proporciona los valores del Criterio de Información de Akaike (AIC) y del Criterio de Información Bayesiano (BIC). Estas medidas evalúan la calidad del ajuste de un modelo, considerando simultáneamente su complejidad. De manera general, se consideran más deseables aquellos modelos que presentan valores más bajos de AIC y BIC.
 
-Cabe destacar que aunque los valores de AIC y BIC que nos proporciona la función anova son ligeramente distintos a los calculados a mano por la manera de calcularlos. Pero nos indican el mismo resultado, que es que parece ser que el modelo simple es mejor que el modelo complejo.
+El AIC penaliza la complejidad del modelo de manera menos severa que el BIC. Un valor más bajo de AIC indica un mejor equilibrio entre ajuste y parsimonia.
 
-#### Diagnóstico de residuos
+En contraste, el BIC penaliza la complejidad del modelo de forma más estricta que el AIC. Una disminución en el valor de BIC sugiere un mejor balance entre el ajuste del modelo y su complejidad.
 
-```{r}
-# Gráfico de residuos para el modelo1
-plot(residuals(modelo1) ~ fitted(modelo1))
-
-# Gráfico de residuos para el modelo1
-plot(residuals(modelo2) ~ fitted(modelo2))
-```
-
-En ninguno de los dos modelos se observan patrones inadecuados de los residuos, así que en ese sentido ambos son correctos.Una vez más, puesto que los dos son correctos el más sencillo es preferible.
-
-Con todo esto concluimos que el modelo con intercepciones aleatorias es el más adecuado, ya que su ajuste es bueno y es más sencillo que el modelo con intercepciones y pendientes aleatorias.
+Con base en esta información, se concluye que el modelo que incorpora intercepciones y pendientes aleatorias es preferible al modelo que únicamente considera intercepciones aleatorias.
 
 ## 3.4 Factores significativos
 
@@ -661,11 +613,7 @@ Con todo esto concluimos que el modelo con intercepciones aleatorias es el más 
 summary(modelo1)
 ```
 
-Como podemos ver, en el resumen del modelo no se muestran qué factores resultan significativos, pero podemos calcular los valores de confianzas usando un valor critico de la distribución de la t student. En este caso una valor de confianza de 0.05, implicaría un valor crítico de 1.96. 
-
-Intervalo de confianza = Estimado de coeficiente +- 1.96 * Error estándard del coeficiente.
-
-Para más comodidad, lo calculamos automáticamente con el paquete broom.
+Una vez más, debemos calcular los intervalos de confianza para determinar la significatividad de los factores.
 
 ```{r}
 # install.packages("broom")
@@ -675,17 +623,23 @@ library(broom)
 confint(modelo1)
 ```
 
-Los factores significativos son aquellos en los que el intervalo de confianza no incluye el valor 0. 
+Los factores que adquieren significancia se identifican a través de la observación de intervalos de confianza que no incorporan el valor 0.
 
-Podemos observar que sólo el intervalo de confianza del tratamiento1 incluye el valor 0. Es decir que el resto de factores (tiempo e interacción tiempo-tratamiento) son significativos, pero no el tratamiento.
+Se constata que únicamente el intervalo de confianza correspondiente al tratamiento 1 incluye el valor 0. Esto indica que los restantes factores (tiempo e interacción tiempo:tratamiento) son estadísticamente significativos, mientras que el tratamiento no lo es.
 
-Esto no es muy esperanzador para el estudio clínico, ya que parece ser que el tratamiento no tiene efecto sobre la depresión, si no que esta disminuye naturalmente a lo largo del tiempo en las pacientes independientemente del fármaco.
+Este hallazgo plantea perspectivas poco alentadoras para el estudio clínico, ya que sugiere que el tratamiento no ejerce un efecto discernible sobre la depresión. En cambio, parece que la disminución de la depresión ocurre de forma natural a lo largo del tiempo en las pacientes, independientemente de la administración del fármaco.
 
-Sin embargo, al tener una interacción significativa parece ser que la relación entre el tratamiento y la respuesta de depresión cambia significativamente a lo largo del tiempo. En otras palabras, el efecto del tratamiento puede ser diferente en diferentes momentos del estudio. Esto podría estudiarse más detalladamente para esclarecerse mejor: Podría ser que el tratamiento no tenga un efecto inmediato, pero a medida que pasa el tiempo, se vuelva significativo. Esto podría sugerir que se necesita tiempo para que el tratamiento tenga un impacto en la respuesta de depresión. O bien que el tratamiento tenga un efecto significativo en algunos momentos específicos (por ejemplo, ciertos períodos de tiempo después de la administración), pero no en otros. O finalmente que el tratamiento afecte de manera diferente a la respuesta de depresión en distintos momentos del estudio, y estas variaciones a lo largo del tiempo se combinan de tal manera que el efecto general del tratamiento no es significativo.
+No obstante, la presencia de una interacción significativa sugiere que la relación entre el tratamiento y la respuesta de depresión experimenta cambios significativos a lo largo del tiempo. En otras palabras, el impacto del tratamiento podría variar en diferentes momentos del estudio. Esta dinámica podría ser objeto de un examen más detenido: es posible que el tratamiento no surta un efecto inmediato, sino que requiera un período de tiempo para manifestarse. O bien, podría indicar que el tratamiento ejerce un efecto destacado en ciertos momentos específicos (por ejemplo, períodos de tiempo particulares después de la administración), pero no en otros. Alternativamente, el tratamiento podría influir de manera dispar en la respuesta de depresión en distintos momentos del estudio, y estas variaciones a lo largo del tiempo podrían amalgamarse de tal manera que el efecto general del tratamiento no alcance significancia.
 
-Se podrían realizar más análisis post-hoc y análisis exploratorios para acabar de esclarecer estos efectos.
+Para obtener mayor claridad sobre estos efectos, se podrían llevar a cabo análisis exploratorios y post hoc adicionales.
 
 ## 3.5 Modelo estimado en las pacientes 1 y 26
+
+```{r}
+coef(modelo1)$paciente["1",]
+coef(modelo1)$paciente["26",]
+```
+
 
 Tal y como hemos explicado antes:
 
