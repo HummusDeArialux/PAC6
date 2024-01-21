@@ -325,7 +325,7 @@ En este caso, el modelo lineal es mucho más simple porque no se tiene en cuenta
 
 ## 2.3 Efecto de la dieta
 
-# Ajustando el consumo
+### Ajustando el consumo
 
 ```{r}
 # Ajustar el modelo lineal
@@ -358,8 +358,6 @@ Al incorporar el consumo como una covariable en el modelo, estamos intentando ai
 
 En resumen, al incluir el consumo como covariable, se mejora la capacidad del modelo para discernir entre los efectos de la dieta y el consumo en el aumento de peso, lo que resulta en estimaciones más ajustadas y potencialmente más precisas.
 
-En resumen, al incluir el consumo como covariable, se está mejorando la capacidad del modelo para discernir entre los efectos de la dieta y el consumo en el aumento de peso, y, por lo tanto, se obtienen estimaciones más ajustadas y potencialmente más precisas.
-
 ## 2.4 Diagnosis de suposiciones
 
 #### Independencia de los residuos
@@ -373,7 +371,7 @@ library(lmtest)
 dwtest(modelo_con)
 ```
 
-
+En la representación gráfica, se observa la ausencia de patrones evidentes en los residuos. Este hallazgo se corrobora mediante la aplicación del test de Durbin-Watson, el cual indica la inexistencia de correlaciones significativas entre los residuos (valor de p > 0.05, aceptamos H0).
 
 #### Homocedasticidad
 
@@ -399,6 +397,17 @@ shapiro.test(modelo_con$residuals)
 
 Tanto a partir del QQ-Plot (puntos alrededor de la diagonal), como el test de Shapiro-Wilks (p-valor > 0,05), concluimos que los residuos son normales.
 
+#### Interacción tratamiento-consumo
+
+```{r}
+modelo_interaccion <- lm(incremento ~ consumo * dieta, data = data)
+Anova(modelo_interaccion)
+```
+
+Se advierte que la interacción entre el consumo y la dieta no alcanza significancia estadística.
+
+La observación de estos parámetros confirma que el modelo satisface las suposiciones necesarias, permitiendo así la continuación del análisis sin inconvenientes.
+
 ## 2.5 Diferencias entre dietas
 
 Para determinar entre qué dietas hay diferencias significativas, se deben realizar pruebas de comparaciones múltiples.
@@ -419,7 +428,8 @@ resumen_comp$test$pvalues_ajustados <- pvalores_ajustados
 # Mostrar el resumen con pvalores ajustados
 print(resumen_comp)
 ```
-Se han realizado comparaciones múltiples por el método Tukey, y después de ajustar los pvalores por Bonferroni, vemos que existen diferencias significativas entre las dietas 4 y 1, las dietas 3 y 2 y por último las dietas 4 y 3.
+
+Se efectuaron comparaciones múltiples mediante el método de Tukey, y tras ajustar los valores de p mediante el procedimiento de Bonferroni, se constata la presencia de diferencias estadísticamente significativas entre las dietas 4 y 1, entre las dietas 3 y 2, y, finalmente, entre las dietas 4 y 3.
 
 # Problema 3
 
