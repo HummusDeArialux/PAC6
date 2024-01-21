@@ -366,3 +366,295 @@ resumen_comp$test$pvalues_ajustados <- pvalores_ajustados
 print(resumen_comp)
 ```
 Se han realizado comparaciones múltiples por el método Tukey, y después de ajustar los pvalores por Bonferroni, vemos que existen diferencias significativas entre las dietas 4 y 1, las dietas 3 y 2 y por último las dietas 4 y 3.
+
+# Problema 3
+
+Cargamos los datos del problema.
+
+```{r}
+# Seteamos el directorio de trabajo
+setwd("D:/Antiguos estudios/MASTER2/Sem3/Diseño/PAC6/PAC6")
+
+# Importamos los datos
+data <- read.csv("dades_problema3_pec6.csv", dec = ".", header = TRUE, sep = ",")
+
+# Marcamos los factores
+data$tratamiento <- as.factor(data$tratamiento)
+data$paciente <- as.factor(data$paciente)
+data$tiempo <- as.factor(data$tiempo)
+```
+
+## 3.1 Análisis descriptivo
+
+```{r}
+# Realiza un resumen descriptivo
+summary(data)
+
+color_tratamiento = c("tomato1", "olivedrab3")
+
+# Boxplot depresión por dieta
+boxplot(depresion ~ tratamiento, data = data, col = color_tratamiento)
+
+# Boxplot depresión por tiempo
+boxplot(depresion ~ tiempo, data = data)
+
+library(ggplot2)
+
+# Gráfico de dispersión depresión vs tiempo
+ggplot(data, aes(x = tiempo, y = depresion)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +  # Añade la línea de tendencia general
+  labs(title = "Relación entre Depresión y Tiempo",
+       x = "Tiempo",
+       y = "Depresión") +
+  theme_minimal()
+
+# Gráfico de dispersión depresión vs tiempo con tratamiento
+ggplot(data, aes(x = tiempo, y = depresion, color = factor(tratamiento))) +
+  scale_color_manual(values = color_tratamiento) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +  # Añade la línea de tendencia + 
+  labs(title = "Relación entre Depresión y Tiempo",
+       x = "Tiempo",
+       y = "Depresión") +
+  theme_minimal()
+```
+
+```{r, fig.width=10, fig.height=15}
+ggplot(data, aes(x = tiempo, y = depresion)) + 
+  geom_smooth(method = "lm", level = 0.95) +
+  geom_point() + 
+  facet_wrap(~ paciente, nrow = 10, ncol = 5) +
+  theme(
+  )
+
+```
+
+## 3.2 Modelo lineal
+
+$Y_{ij} = \beta_{0} + \beta_{1}*tratamiento_{i} +  \beta_{2}*tiempo_{ij} + \beta_{3}*(tratamiento_{i}$ x $tiempo_{ij}) + u_{i0} + u_{il}*tiempo_{ij} + \epsilon_{ij}$
+
+Donde:
+
++ $Y_{ij}$ es la medida de depresión para la i-ésima paciente en la j-ésima visita.
++ $tratamiento_{i}$ es la variable indicadora para el tratamiento (1 si es activo, 0 si es placebo). Es decir, la "i" en $tratamiento_{i}$ no indica el indice del tratamiento si no el número de paciente, el propio "$tratamiento_{i}$" es indicador de tratamiento.
++ $tiempo_{ij}$ es el tiempo de la j-ésima visita para la i-ésima paciente.
++ $\beta_{0}$ es la intercepción fija del modelo.
++ $\beta_{1}$ es el efecto fijo del tratamiento.
++ $\beta_{2}$ es el efecto fijo del tiempo.
++ $\beta_{3}$ representa la interacción entre el tratamiento y el tiempo.
++ $u_{i0}$ es el término aleatorio que modela las diferencias individuales en las intercepciones.
++ $u_{il}$ es el término aleatorio que modela las diferencias individuales en las pendientes respecto al tiempo.
++ $\epsilon_{ij}$ es el término de error.
+
+Cabe destacar que i=50 porque hay 50 pacientes y j=7 porque se mide la depresión en 7 visitas.
+
+Este modelo puede expresarse en notación matricial de la siguiente manera:
+
+$Y = X\beta + Zu + \epsilon$
+
+Dimensiones:
+
++ N=50×7=350N=50×7=350: Número total de observaciones.
++ k: Número de tratamientos.
++ p: Número de efectos fijos no relacionados con el tratamiento.
++ q: Número de efectos aleatorios.
+
+Ahora, definimos las matrices y vectores según estas dimensiones:
+
++ $Y$: Vector de todas las medidas de depresión, de dimensión 350×1350×1.
++ $X$: Matriz de regresión de efectos fijos, de dimensión 350×(k+p)350×(k+p).
++ $β$: Vector de coeficientes de efectos fijos, de dimensión (k+p)×1(k+p)×1.
++ $Z$: Matriz de regresión de efectos aleatorios, de dimensión 350×q350×q.
++ $u$: Vector de efectos aleatorios, de dimensión q×1q×1.
++ $\epsilon$: Vector de errores, de dimensión 350×1350×1.
+
+Particionado para cada elemento, quedaría como:
+
+$Y = $
+
+$$\begin{bmatrix}
+Y_{1} \\
+Y_{2} \\
+. \\
+. \\
+. \\
+Y_{350}\\
+\end{bmatrix}$$
+
+## 3.3 Implementación del modelo
+
+### Intercepciones aleatorias
+
+Para ajustar este modelo, especificamos que depresión es la variable respuesta y tratamiento y tiempo son variables independientes. Con el término "tratamiento * tiempo", también incluimos la interacción entre el tratamiento y el tiempo, ya que podría haber efectos diferenciados del tiempo según el tipo de tratamiento. Por otro lado, "(1|paciente)" especifica que estamos modelando una intercepto aleatorio para cada paciente. Esto tiene en cuenta la variabilidad entre los pacientes.
+
+```{r}
+# install.packages("lme4", dependencies=TRUE)
+# install.packages("Matrix", dependencies=TRUE)
+library(lme4)
+
+# Define el modelo con intercepciones aleatorias
+modelo1 <- lmer(depresion ~ tratamiento * tiempo + (1|paciente), data = data)
+
+# Muestra un resumen del modelo
+summary(modelo1)
+```
+
+### Intercepciones y pendientes aleatorias
+
+Para ajustar este modelo, especificamos que depresión es la variable respuesta y tratamiento y tiempo son variables independientes. Con el término "tratamiento * tiempo", también incluimos la interacción entre el tratamiento y el tiempo, ya que podría haber efectos diferenciados del tiempo según el tipo de tratamiento. Por otro lado, "(tiempo | paciente)" especifica que estamos modelando una intercepción aleatoria y una pendiente aleatoria para cada paciente.
+
+El término (tiempo | paciente) implica que cada paciente puede tener su propia intercepción (efecto inicial) y pendiente (efecto en el tiempo) en relación con la variable de respuesta.
+
+
+remove.packages("Matrix")
+remove.packages("lme4")
+install.packages("lme4", type = "source")
+library(lme4)
+
+
+
+```{r}
+library(lme4)
+
+# Define el modelo con intercepciones y pendientes aleatorias
+modelo2 <- lmer(depresion ~ tratamiento * tiempo + (tratamiento | paciente), data = data)
+
+# TRATAMIENTO O TIEMPO HOLA??
+
+# Muestra un resumen del modelo
+summary(modelo2)
+```
+
+### Comparación de modelos
+
+#### Criterios de información
+
+```{r}
+# AIC y BIC
+modelo1_AIC <- AIC(modelo1)
+modelo1_BIC <- BIC(modelo1)
+modelo2_AIC <- AIC(modelo2)
+modelo2_BIC <- BIC(modelo2)
+
+# Creamos un df
+resultados_df <- data.frame(
+  Model = c("Modelo con intercepciones aleatorias", "Modelo con intercepciones y pendientes aleatorias"),
+  AIC = c(modelo1_AIC, modelo2_AIC),
+  BIC = c(modelo1_BIC, modelo2_BIC)
+)
+
+library(knitr)
+kable(resultados_df, format = "pandoc")
+```
+
+El AIC (Criterio de Información de Akaike) y el BIC (Criterio de Información Bayesiano), son medidas que evalúan la bondad de ajuste de un modelo, teniendo en cuenta su complejidad. En general, modelos con valores más bajos de AIC y BIC son considerados preferibles.
+
+El AIC penaliza la complejidad del modelo menos que el BIC. Cuanto menor sea el valor de AIC, mejor se considera el modelo en términos de ajuste y parsimonia.
+
+El BIC penaliza la complejidad del modelo de manera más fuerte que el AIC. Similar al AIC, un valor más bajo de BIC indica un mejor equilibrio entre ajuste y complejidad.
+
+Según esta información, parece ser que el modelo con intercepciones aleatorias describe bien el modelo sin necesidad de tanta complejidad.
+
+#### Comparación de modelos anidados
+
+```{r}
+# Comparación de modelos usando likelihood ratio test
+anova(modelo1, modelo2)
+```
+
+Según la prueba de razón de la verosimilitud, parece ser que no se muestran diferencias significativas entre los dos modelos (pvalor > 0.05). Siendo este el caso, es preferible escoger el modelo más sencillo, ya que explica igual de bien los datos que el modelo más complejo.
+
+Un valor de p menor que un umbral (por ejemplo, 0.05) indicaría que el modelo más complejo es preferible.
+
+Cabe destacar que aunque los valores de AIC y BIC que nos proporciona la función anova son ligeramente distintos a los calculados a mano por la manera de calcularlos. Pero nos indican el mismo resultado, que es que parece ser que el modelo simple es mejor que el modelo complejo.
+
+#### Diagnóstico de residuos
+
+```{r}
+# Gráfico de residuos para el modelo1
+plot(residuals(modelo1) ~ fitted(modelo1))
+
+# Gráfico de residuos para el modelo1
+plot(residuals(modelo2) ~ fitted(modelo2))
+```
+
+En ninguno de los dos modelos se observan patrones inadecuados de los residuos, así que en ese sentido ambos son correctos.Una vez más, puesto que los dos son correctos el más sencillo es preferible.
+
+Con todo esto concluimos que el modelo con intercepciones aleatorias es el más adecuado, ya que su ajuste es bueno y es más sencillo que el modelo con intercepciones y pendientes aleatorias.
+
+## 3.4 Factores significativos
+
+```{r}
+summary(modelo1)
+```
+
+Como podemos ver, en el resumen del modelo no se muestran qué factores resultan significativos, pero podemos calcular los valores de confianzas usando un valor critico de la distribución de la t student. En este caso una valor de confianza de 0.05, implicaría un valor crítico de 1.96. 
+
+Intervalo de confianza = Estimado de coeficiente +- 1.96 * Error estándard del coeficiente.
+
+Para más comodidad, lo calculamos automáticamente con el paquete broom.
+
+```{r}
+# install.packages("broom")
+library(broom)
+
+# Intervalos de confianza
+confint(modelo1)
+```
+
+Los factores significativos son aquellos en los que el intervalo de confianza no incluye el valor 0. 
+
+Podemos observar que sólo el intervalo de confianza del tratamiento1 incluye el valor 0. Es decir que el resto de factores (tiempo e interacción tiempo-tratamiento) son significativos, pero no el tratamiento.
+
+Esto no es muy esperanzador para el estudio clínico, ya que parece ser que el tratamiento no tiene efecto sobre la depresión, si no que esta disminuye naturalmente a lo largo del tiempo en las pacientes independientemente del fármaco.
+
+Sin embargo, al tener una interacción significativa parece ser que la relación entre el tratamiento y la respuesta de depresión cambia significativamente a lo largo del tiempo. En otras palabras, el efecto del tratamiento puede ser diferente en diferentes momentos del estudio. Esto podría estudiarse más detalladamente para esclarecerse mejor: Podría ser que el tratamiento no tenga un efecto inmediato, pero a medida que pasa el tiempo, se vuelva significativo. Esto podría sugerir que se necesita tiempo para que el tratamiento tenga un impacto en la respuesta de depresión. O bien que el tratamiento tenga un efecto significativo en algunos momentos específicos (por ejemplo, ciertos períodos de tiempo después de la administración), pero no en otros. O finalmente que el tratamiento afecte de manera diferente a la respuesta de depresión en distintos momentos del estudio, y estas variaciones a lo largo del tiempo se combinan de tal manera que el efecto general del tratamiento no es significativo.
+
+Se podrían realizar más análisis post-hoc y análisis exploratorios para acabar de esclarecer estos efectos.
+
+## 3.5 Modelo estimado en las pacientes 1 y 26
+
+Tal y como hemos explicado antes:
+
+$depresion = \beta_{0} + \beta_{tratamiento}*tratamiento + \beta_{tiempo}*tiempo + \beta_{tratamiento:tiempo}*tratamiento:tiempo + b_{paciente} + \epsilon$
+
+$depresion = 20.88 + 0.61*tratamiento + \beta_{tiempo}*tiempo + \beta_{tratamiento:tiempo}*tratamiento:tiempo + b_{paciente} + \epsilon$
+
+Donde: 
+
++ $\beta_{0}$ es el intercepto.
++ $\beta_{tratamiento}, \beta_{tiempo}, \beta_{tratamiento:tiempo}$ son los coeficientes asociados a las variables predictoras.
++ $b_{paciente}$ es el efecto aleatorio para cada paciente.
+
+Esta ecuación representa la relación entre la variable de respuesta (depresión) y las variables predictoras (tratamiento, tiempo, y la interacción entre tratamiento y tiempo) considerando tanto los efectos fijos como los efectos aleatorios.
+
+Podemos extraer y estudiar los efectos aleatorios de los pacientes 1 y 26.
+
+```{r}
+library(lme4)
+efectos_aleatorios <- ranef(modelo1)$paciente
+
+efecto_paciente1 <- efectos_aleatorios[1, ]
+efecto_paciente26 <- efectos_aleatorios[26, ]
+
+cat("Paciente 1:", efecto_paciente1)
+cat("\n")
+cat("Paciente 26:", efecto_paciente26)
+```
+
+Para el paciente 1: El valor positivo sugiere que su respuesta en depresión es aproximadamente 0.895 unidades más alta de lo esperado basándose en el modelo global. En otras palabras, el paciente 1 experimenta una depresión más elevada de lo que se predice por el modelo para el conjunto de datos en su totalidad.
+
+Para el paciente 26: El valor positivo de 0.612 sugiere que su respuesta en depresión es aproximadamente 0.612 unidades más alta de lo esperado basándose en el modelo global. En este caso, el paciente 26 también experimenta una depresión más elevada de lo predicho por el modelo.
+
+Estos valores proporcionan información sobre la variabilidad individual entre los pacientes en términos de la respuesta a la depresión. Es importante tener en cuenta que estos efectos aleatorios representan la diferencia entre la respuesta real de cada paciente y la respuesta predicha por los efectos fijos del modelo global.
+
+En resumen, un valor positivo indica que el paciente tiene una respuesta más alta de lo esperado, mientras que un valor negativo indicaría una respuesta más baja de lo esperado.
+
+En cuanto a los efectos fijos o coeficientes:
+
+```{r}
+summary(modelo1)
+```
+
+Como hemos explicado antes, tanto para el paciente 1 como para el 26, la depresión diminuye conforme el tiempo aumenta.
